@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Encryption & Decryption App</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .card2{
+            border: 2px solid color(srgb 0.8666 0.8667 0.8668);
+            padding: 10px;
+            border-radius: 10px;
+            background: color(srgb 0.9764 0.9765 0.9766);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-custom {
+            background-color: #4a719a;
+            color: white;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #2c5e8f;
+            color: white;
+        }
+        .btn-custom:disabled {
+            background-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+        }
+        .btn-danger-custom {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+        .btn-danger-custom:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .spinner {
+            display: none;
+            margin: 20px auto;
+        }
+        .tab-buttons {
+            display: flex;
+            width: 100%;
+        }
+        .tab-buttons button {
+            flex: 1;
+            margin: 0;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px 10px 0 0;
+            background-color: #f4f3f3;
+            color: #ddd;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .tab-buttons button.active {
+            background-color: #f9f9f9;
+            color: black;
+        }
+        .tab-content {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .disabled-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 255, 0, 0.1);
+            pointer-events: none;
+            border-radius: 10px;
+        }
+        .process-status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .step-title {
+            display: flex;
+            align-items: center;
+        }
+        .step-title i {
+            margin-right: 10px;
+        }
+        .step-title .fa-check, .card2 .fa-check {
+            color: green;
+        }
+        .step-title .fa-times, .card2 .fa-times {
+            color: red;
+        }
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center">
+            <h3>Data Encryption & Decryption App</h3>
+            <p class="lead">Encrypt and decrypt files securely using Docker containers.</p>
+        </div>
+
+        <!-- Spinner -->
+        <div class="spinner-border text-primary spinner" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div id="progressText" class="progress-text"></div>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status" style="display: none;"></div>
+
+        <!-- Tab Buttons -->
+        <div class="tab-buttons">
+            <button id="encryptionTab" class="btn btn-custom active" onclick="switchTab('encryption')">Encryption</button>
+            <button id="decryptionTab" class="btn btn-custom" onclick="switchTab('decryption')">Decryption</button>
+        </div>
+
+        <!-- Divider Box -->
+        <div class="tab-content">
+            <!-- Encryption Tab -->
+            <div id="encryptionSection" class="tab-section">
+                <!-- Step 1: Setup Environment -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="encryptionSetupIcon" class="fas fa-times"></i>
+                        Step 1: Setup Encryption Environment
+                    </h5>
+                    <button id="encryptionSetupButton" onclick="setupEnvironment('encryption')" class="btn btn-custom w-100">Setup Environment</button>
+                    <div id="encryptionSetupOverlay" class="disabled-overlay" style="display: none;"></div>
+                </div>
+
+                <!-- Step 2: Upload File -->
+                <div id="uploadEncryptionFile" class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="encryptionUploadIcon" class="fas fa-times"></i>
+                        Step 2: Upload Data for Encryption
+                    </h5>
+                    <input type="file" id="encryptionFile" class="form-control">
+                    <button id="encryptionUploadButton" onclick="uploadFile('encryption')" class="btn btn-custom w-100 mt-2">Upload</button>
+                    <div id="encryptionUploadOverlay" class="disabled-overlay" style="display: none;"></div>
+                </div>
+
+                <!-- Step 3: Start Process -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="encryptionProcessIcon" class="fas fa-times"></i>
+                        Step 3: Start Encryption
+                    </h5>
+                    <button id="encryptionProcessButton" onclick="startProcess('encryption')" class="btn btn-custom w-100" disabled>Start Encryption</button>
+                    <div id="encryptionProcessStatus" class="process-status" style="display: none;"></div>
+                </div>
+
+                <!-- Step 4: Download Results -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="encryptionDownloadIcon" class="fas fa-times"></i>
+                        Step 4: Download Encrypted Data
+                    </h5>
+                    <button id="encryptionDownloadButton" onclick="downloadResults('encryption')" class="btn btn-custom w-100" disabled>Download</button>
+                    <div id="encryptionDownloadStatus" class="process-status" style="display: none;"></div>
+                </div>
+
+                <!-- Step 5: Remove Container -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="encryptionRemoveIcon" class="fas fa-times"></i>
+                        Step 5: Remove Container
+                    </h5>
+                    <button id="encryptionRemoveButton" onclick="removeContainer('encryption')" class="btn btn-danger-custom w-100">Remove Container</button>
+                </div>
+            </div>
+
+            <!-- Decryption Tab -->
+            <div id="decryptionSection" class="tab-section" style="display: none;">
+                <!-- Step 1: Setup Environment -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="decryptionSetupIcon" class="fas fa-times"></i>
+                        Step 1: Setup Decryption Environment
+                    </h5>
+                    <button id="decryptionSetupButton" onclick="setupEnvironment('decryption')" class="btn btn-custom w-100">Setup Environment</button>
+                    <div id="decryptionSetupOverlay" class="disabled-overlay" style="display: none;"></div>
+                </div>
+            
+                <!-- Step 2: Upload Files -->
+                <div id="uploadDecryptionFile" class="card p-4">
+                    <h5 class="card-title step-title">
+                        Step 2: Upload Files for Decryption
+                    </h5>
+            
+                    <!-- Upload Box for encrypted_result.txt -->
+                    <div class="mb-3 card2">
+                        <i id="decryptionencrypted_resultIcon" class="fas fa-times"></i>
+                        <label for="encryptedResultFile" class="form-label">1- encrypted_result.txt</label>
+                        <input type="file" id="encryptedResultFile" class="form-control">
+                        <button id="decryptionencrypted_resultButton" class="btn btn-custom w-100 mt-2" onclick="uploadDecryptionFile('encrypted_result')">Upload</button>
+                    </div>
+            
+                    <!-- Upload Box for cryptocontext.txt -->
+                    <div class="mb-3 card2">
+                        <i id="decryptioncryptocontextIcon" class="fas fa-times"></i>
+                        <label for="cryptocontextFile" class="form-label">2- cryptocontext.txt</label>
+                        <input type="file" id="cryptocontextFile" class="form-control">
+                        <button id="decryptioncryptocontextButton" class="btn btn-custom w-100 mt-2" onclick="uploadDecryptionFile('cryptocontext')" disabled>Upload</button>
+                    </div>
+            
+                    <!-- Upload Box for key-private.txt -->
+                    <div class="mb-3 card2">
+                        <i id="decryptionkey-privateIcon" class="fas fa-times"></i>
+                        <label for="keyPrivateFile" class="form-label">3- key-private.txt</label>
+                        <input type="file" id="keyPrivateFile" class="form-control">
+                        <button id="decryptionkey-privateButton" class="btn btn-custom w-100 mt-2" onclick="uploadDecryptionFile('key-private')" disabled>Upload</button>
+                    </div>
+                </div>
+            
+                <!-- Step 3: Start Process -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="decryptionProcessIcon" class="fas fa-times"></i>
+                        Step 3: Start Decryption
+                    </h5>
+                    <button id="decryptionProcessButton" onclick="startProcess('decryption')" class="btn btn-custom w-100" disabled>Start Decryption</button>
+                    <div id="decryptionProcessStatus" class="process-status" style="display: none;"></div>
+                </div>
+            
+                <!-- Step 4: Download Results -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="decryptionDownloadIcon" class="fas fa-times"></i>
+                        Step 4: Download Decrypted Data
+                    </h5>
+                    <button id="decryptionDownloadButton" onclick="downloadResults('decryption')" class="btn btn-custom w-100" disabled>Download</button>
+                    <div id="decryptionDownloadStatus" class="process-status" style="display: none;"></div>
+                </div>
+            
+                <!-- Step 5: Remove Container -->
+                <div class="card p-4">
+                    <h5 class="card-title step-title">
+                        <i id="decryptionRemoveIcon" class="fas fa-times"></i>
+                        Step 5: Remove Container
+                    </h5>
+                    <button id="decryptionRemoveButton" onclick="removeContainer('decryption')" class="btn btn-danger-custom w-100">Remove Container</button>
+                </div>
+            </div>            
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function switchTab(tab) {
+            document.getElementById('encryptionSection').style.display = (tab === 'encryption') ? 'block' : 'none';
+            document.getElementById('decryptionSection').style.display = (tab === 'decryption') ? 'block' : 'none';
+            document.getElementById('encryptionTab').classList.toggle('active', tab === 'encryption');
+            document.getElementById('decryptionTab').classList.toggle('active', tab === 'decryption');
+        }
+
+        function showStatusMessage(message, isError = false) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.className = isError ? 'status error' : 'status success';
+        }
+
+        function toggleSpinner(show, progressMessage = '') {
+            const spinner = document.querySelector('.spinner');
+            const progressText = document.getElementById('progressText');
+            spinner.style.display = show ? 'block' : 'none';
+            progressText.textContent = progressMessage;
+            progressText.style.display = show ? 'block' : 'none';
+        }
+
+        function updateStepStatus(mode, step, success) {
+            const icon = document.getElementById(`${mode}${step}Icon`);
+            const button = document.getElementById(`${mode}${step}Button`);
+            if (success) {
+                icon.className = 'fas fa-check';
+                button.disabled = true;
+                button.textContent = 'Uploaded';
+                button.classList.add('btn-custom-disabled');
+            } else {
+                icon.className = 'fas fa-times';
+            }
+        }
+
+        function enableNextStep(mode, step) {
+            const nextStepButton = document.getElementById(`${mode}${step}Button`);
+            if (nextStepButton) {
+                nextStepButton.disabled = false;
+            }
+        }
+
+        async function setupEnvironment(mode) {
+            toggleSpinner(true, 'Setup is in progress...');
+            const response = await fetch('/setup_environment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode }),
+            });
+            const data = await response.json();
+            showStatusMessage(data.status, data.error);
+            toggleSpinner(false);
+
+            if (!data.error) {
+                updateStepStatus(mode, 'Setup', true);
+                enableNextStep(mode, 'Upload');
+            }
+        }
+        
+        async function uploadFile(mode) {
+    const fileInput = document.getElementById(`${mode}File`);
+    const files = fileInput.files;
+
+    if (!files || files.length === 0) {
+        showStatusMessage('Please select files to upload.', true);
+        return;
+    }
+
+    // For encryption, only 1 file is allowed
+    if (mode === 'encryption' && files.length !== 1) {
+        showStatusMessage('Encryption requires exactly 1 file.', true);
+        return;
+    }
+
+    // For decryption, exactly 3 files are required
+    if (mode === 'decryption' && files.length !== 3) {
+        showStatusMessage('Decryption requires exactly 3 files.', true);
+        return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('file', files[i]);
+    }
+    formData.append('mode', mode);
+
+    toggleSpinner(true, 'Upload is in progress...');
+    const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    const data = await response.json();
+    showStatusMessage(data.status, data.error);
+
+    if (!data.error) {
+        fileInput.disabled = true;
+        updateStepStatus(mode, 'Upload', true);
+        enableNextStep(mode, 'Process');
+        // document.getElementById(`upload${mode.charAt(0).toUpperCase() + mode.slice(1)}File`).style.display = 'none';
+    }
+    toggleSpinner(false);
+}
+
+        // async function uploadFile(mode) {
+        //     const fileInput = document.getElementById(`${mode}File`);
+        //     const file = fileInput.files[0];
+        //     if (!file) {
+        //         showStatusMessage('Please select a file to upload.', true);
+        //         return;
+        //     }
+
+        //     const formData = new FormData();
+        //     formData.append('file', file);
+        //     formData.append('mode', mode);
+
+        //     toggleSpinner(true, 'Upload is in progress...');
+        //     const response = await fetch('/upload', {
+        //         method: 'POST',
+        //         body: formData,
+        //     });
+        //     const data = await response.json();
+        //     showStatusMessage(data.status, data.error);
+
+        //     if (!data.error) {
+        //         updateStepStatus(mode, 'Upload', true);
+        //         enableNextStep(mode, 'Process');
+        //     }
+        //     toggleSpinner(false);
+        // }
+
+        async function startProcess(mode) {
+            toggleSpinner(true, `${mode.charAt(0).toUpperCase() + mode.slice(1)} is in progress...`);
+            const processStatus = document.getElementById(`${mode}ProcessStatus`);
+            processStatus.textContent = `${mode.charAt(0).toUpperCase() + mode.slice(1)} in progress...`;
+            processStatus.style.display = 'block';
+
+            const response = await fetch('/start_process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode }),
+            });
+            const data = await response.json();
+            showStatusMessage(data.status, data.error);
+
+            if (!data.error) {
+                updateStepStatus(mode, 'Process', true);
+                enableNextStep(mode, 'Download');
+                processStatus.style.display = 'none'; // Remove progress text
+            }
+            toggleSpinner(false);
+        }
+
+        async function downloadResults(mode) {
+        toggleSpinner(true, 'Download is in progress...');
+        const downloadStatus = document.getElementById(`${mode}DownloadStatus`);
+        downloadStatus.textContent = 'Generating and downloading results...';
+        downloadStatus.style.display = 'block';
+
+        try {
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode }),
+            });
+
+            if (response.ok) {
+                // Trigger the file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'results.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                // Update status and stop spinner
+                showStatusMessage('Download completed successfully!');
+                updateStepStatus(mode, 'Download', true);
+                enableNextStep(mode, 'Remove');
+            } else {
+                const data = await response.json();
+                showStatusMessage(data.status || 'Download failed.', true);
+            }
+        } catch (error) {
+            showStatusMessage('Error during download: ' + error.message, true);
+        } finally {
+            toggleSpinner(false);
+            downloadStatus.style.display = 'none'; // Remove progress text
+        }
+    }
+
+        async function removeContainer(mode) {
+            toggleSpinner(true, 'Removing container...');
+            const response = await fetch('/remove_container', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode }),
+            });
+            const data = await response.json();
+            showStatusMessage(data.status, data.error);
+
+            if (!data.error) {
+                // Reset all steps
+                document.querySelectorAll(`#${mode}Section .step-title i`).forEach(icon => icon.className = 'fas fa-times');
+                document.querySelectorAll(`#${mode}Section .btn-custom`).forEach(button => button.disabled = true);
+                document.getElementById(`${mode}SetupButton`).disabled = false; // Re-enable setup button
+            }
+            toggleSpinner(false);
+        }
+
+        async function uploadDecryptionFile(fileType) {
+        const fileInputMap = {
+            'encrypted_result': 'encryptedResultFile',
+            'cryptocontext': 'cryptocontextFile',
+            'key-private': 'keyPrivateFile',
+        };
+
+        const fileInput = document.getElementById(fileInputMap[fileType]);
+        const file = fileInput.files[0];
+
+        if (!file) {
+            showStatusMessage('Please select a file to upload.', true);
+            return;
+        }
+
+
+        if (file && file.name !== fileType+".txt") {
+            showStatusMessage(`Invalid file name, Expected: ${fileType+".txt"}.`, true);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('fileType', fileType);
+        formData.append('file', file)
+        
+        toggleSpinner(true, `Uploading is in progress...`);
+        const response = await fetch('/upload_file', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+        showStatusMessage(data.status, data.error);
+
+        if (!data.error) {
+            fileInput.disabled = true;
+            updateStepStatus("decryption", fileType, true);
+            if (fileType=="key-private"){
+                enableNextStep("decryption", 'Process');   
+            } else if (fileType =="encrypted_result"){
+                enableNextStep("decryption", 'cryptocontext');
+            } else if (fileType == "cryptocontext"){
+                enableNextStep("decryption", 'key-private');
+            }
+             
+        }
+        toggleSpinner(false);
+    }
+
+    </script>
+</body>
+</html>
